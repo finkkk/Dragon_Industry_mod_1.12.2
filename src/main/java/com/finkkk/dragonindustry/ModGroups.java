@@ -9,6 +9,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import java.util.List;
+
 public class ModGroups {
     public static final CreativeTabs DRAGON_INDUSTRY = new CreativeTabs(CreativeTabs.getNextID(),"dragon_industry") {
         @SideOnly(Side.CLIENT)

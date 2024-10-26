@@ -1,2 +1,11 @@
 #PARSE_ESCAPES
+
+#groups
+itemGroup.dragon_industry=Dragon Industry
+
+#items
 item.test3.name=Test Item
+
+#blocks
+tile.test_container.name=Test Block 1
+

@@ -1,2 +1,10 @@
 #PARSE_ESCAPES
+
+#groups
+itemGroup.dragon_industry=龙业
+
+#items
 item.test3.name=测试物品
+
+#blocks
+tile.test_container.name=测试方块1
