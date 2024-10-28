@@ -1,6 +1,7 @@
 package com.finkkk.dragonindustry.tileentity;
 
 import com.finkkk.dragonindustry.Item.ModItems;
+import com.finkkk.dragonindustry.block.ModBlocks;
 import com.finkkk.dragonindustry.container.TestContainer;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFurnace;
@@ -152,7 +153,7 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
      */
     public boolean isItemValidForSlot(int index, ItemStack stack)
     {
-        return index == 0 && stack.getItem() == Item.getItemFromBlock(Blocks.DIRT);
+        return index == 0 && stack.getItem() == ModItems.TEST3;
     }
 
     @Override
@@ -178,9 +179,12 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
         {
             return SLOTS_BOTTOM;
         }
-        else
+        else if(side == EnumFacing.UP)
         {
             return SLOTS_TOP;
+        }
+        else {
+            return null;
         }
     }
 
@@ -224,5 +228,23 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
     @Override
     public boolean hasCustomName() {
         return false;
+    }
+
+    net.minecraftforge.items.IItemHandler handlerTop = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.UP);
+    net.minecraftforge.items.IItemHandler handlerBottom = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.DOWN);
+    net.minecraftforge.items.IItemHandler handlerSide = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.WEST);
+
+    @Override
+    @javax.annotation.Nullable
+    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @javax.annotation.Nullable net.minecraft.util.EnumFacing facing)
+    {
+        if (facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+            if (facing == EnumFacing.DOWN)
+                return (T) handlerBottom;
+            else if (facing == EnumFacing.UP)
+                return (T) handlerTop;
+            else
+                return (T) handlerSide;
+        return super.getCapability(capability, facing);
     }
 }
