@@ -1,12 +1,7 @@
 package com.finkkk.dragonindustry.tileentity;
 
-import akka.util.Index;
 import com.finkkk.dragonindustry.Item.ModItems;
-import com.finkkk.dragonindustry.block.ModBlocks;
 import com.finkkk.dragonindustry.container.TestContainer;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockFurnace;
-import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Blocks;
@@ -14,161 +9,125 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.inventory.ItemStackHelper;
-import net.minecraft.inventory.SlotFurnaceFuel;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBoat;
-import net.minecraft.item.ItemDoor;
-import net.minecraft.item.ItemHoe;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.item.ItemTool;
-import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntityLockable;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.datafix.DataFixer;
-import net.minecraft.util.datafix.FixTypes;
-import net.minecraft.util.datafix.walkers.ItemStackDataLists;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.wrapper.SidedInvWrapper;
 
 import javax.annotation.Nullable;
 
 public class TileEntityTestContainer extends TileEntityLockable implements ITickable, ISidedInventory
 {
 
-    private static final int[] SLOTS_TOP = new int[] {0};
-    private static final int[] SLOTS_BOTTOM = new int[] {1};
-    private NonNullList<ItemStack> testContainerItemStacks = NonNullList.<ItemStack>withSize(2, ItemStack.EMPTY);
-
-    // 获取物品槽数量
-    public int getSizeInventory()
-    {
-        return this.testContainerItemStacks.size();
-    }
-
-    public boolean isEmpty()
-    {
-        for (ItemStack itemstack : this.testContainerItemStacks)
-        {
-            if (!itemstack.isEmpty())
-            {
-                return false;
-            }
+    private static final int INPUT_SLOT = 0;
+    private static final int OUTPUT_SLOT = 1;
+    private ItemStackHandler itemStackHandler = new ItemStackHandler(2) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            TileEntityTestContainer.this.markDirty();
         }
+    };
 
-        return true;
-    }
-    public ItemStack getStackInSlot(int index)
-    {
-        return this.testContainerItemStacks.get(index);
-    }
-
-    public ItemStack decrStackSize(int index, int count)
-    {
-        return ItemStackHelper.getAndSplit(this.testContainerItemStacks, index, count);
-    }
-    public ItemStack removeStackFromSlot(int index)
-    {
-        return ItemStackHelper.getAndRemove(this.testContainerItemStacks, index);
-    }
-
-    /**
-     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
-     */
-    public void setInventorySlotContents(int index, ItemStack stack)
-    {
-        this.testContainerItemStacks.set(index, stack);
-        this.markDirty();
-    }
-
-    public static void registerFixesFurnace(DataFixer fixer)
-    {
-        fixer.registerWalker(FixTypes.BLOCK_ENTITY, new ItemStackDataLists(TileEntityTestContainer.class, new String[] {"Items"}));
-    }
-
-    public void readFromNBT(NBTTagCompound compound)
-    {
-        super.readFromNBT(compound);
-        this.testContainerItemStacks = NonNullList.<ItemStack>withSize(this.getSizeInventory(), ItemStack.EMPTY);
-        ItemStackHelper.loadAllItems(compound, this.testContainerItemStacks);
-    }
-
-    public NBTTagCompound writeToNBT(NBTTagCompound compound)
-    {
-        super.writeToNBT(compound);
-        ItemStackHelper.saveAllItems(compound, this.testContainerItemStacks);
-
-        return compound;
-    }
     public int getInventoryStackLimit()
     {
         return 64;
     }
-
-    public void update()
-    {
-
-        if (!this.world.isRemote)
-        {
-            ItemStack inputStack = this.testContainerItemStacks.get(0); // 输入物品
-            ItemStack outputStack = this.testContainerItemStacks.get(1); // 输出物品
+    @Override
+    public void update() {
+        if (!this.world.isRemote) {
+            ItemStack inputStack = itemStackHandler.getStackInSlot(INPUT_SLOT); // 输入物品
+            ItemStack outputStack = itemStackHandler.getStackInSlot(OUTPUT_SLOT); // 输出物品
 
             // 如果输入槽有物品
-            if (!inputStack.isEmpty())
-            {
+            if (!inputStack.isEmpty()) {
                 // 如果输入槽为苹果
-                if (inputStack.getItem() == Items.APPLE)
-                {
+                if (inputStack.getItem() == ModItems.TEST3) {
                     // 如果输出槽为空
-                    if (outputStack.isEmpty())
-                    {
-                        this.testContainerItemStacks.set(1, new ItemStack(Blocks.STONE)); // 输出石头
+                    if (outputStack.isEmpty()) {
+                        itemStackHandler.setStackInSlot(OUTPUT_SLOT, new ItemStack(Blocks.STONE)); // 输出石头
+                        inputStack.shrink(1); // 消耗苹果
                     }
                     // 如果输入槽已有石头且未满64个
-                    else if (outputStack.getItem() == Item.getItemFromBlock(Blocks.STONE) && outputStack.getCount() < outputStack.getMaxStackSize())
-                    {
+                    else if (outputStack.getItem() == Item.getItemFromBlock(Blocks.STONE) && outputStack.getCount() < outputStack.getMaxStackSize()) {
                         outputStack.grow(1); // 增加输出槽的石头数量
+                        inputStack.shrink(1); // 消耗苹果
                     }
-                    inputStack.shrink(1); // 消耗泥土
-                    this.markDirty();     // 标记已修改，保存数据
+
+
                 }
-
             }
-
-        }
-
-    }
-
-    public boolean isUsableByPlayer(EntityPlayer player)
-    {
-        if (this.world.getTileEntity(this.pos) != this)
-        {
-            return false;
-        }
-        else
-        {
-            return player.getDistanceSq((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D) <= 64.0D;
         }
     }
-
-    public void openInventory(EntityPlayer player)
-    {
+    public ItemStackHandler getItemStackHandler() {
+        return itemStackHandler;
     }
 
-    public void closeInventory(EntityPlayer player)
-    {
+    @Override
+    public int getSizeInventory() {
+        return itemStackHandler.getSlots();
     }
 
-    /**
-     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For
-     * guis use Slot.isItemValid
-     */
-    public boolean isItemValidForSlot(int index, ItemStack stack)
-    {
-        return index == 0;
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public ItemStack getStackInSlot(int index) {
+        return itemStackHandler.getStackInSlot(index);
+    }
+
+    @Override
+    public ItemStack decrStackSize(int index, int count) {
+        return itemStackHandler.extractItem(index, count, false);
+    }
+
+    @Override
+    public ItemStack removeStackFromSlot(int index) {
+        return itemStackHandler.extractItem(index, itemStackHandler.getStackInSlot(index).getCount(), false);
+    }
+
+    @Override
+    public void setInventorySlotContents(int index, ItemStack stack) {
+        itemStackHandler.setStackInSlot(index, stack);
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound compound) {
+        super.readFromNBT(compound);
+        itemStackHandler.deserializeNBT(compound.getCompoundTag("Items"));
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+        super.writeToNBT(compound);
+        compound.setTag("Items", itemStackHandler.serializeNBT());
+        return compound;
+    }
+
+    @Override
+    public boolean isUsableByPlayer(EntityPlayer player) {
+        return player.getDistanceSq((double) this.pos.getX() + 0.5D, (double) this.pos.getY() + 0.5D, (double) this.pos.getZ() + 0.5D) <= 64.0D;
+    }
+
+    @Override
+    public void openInventory(EntityPlayer player) {
+
+    }
+
+    @Override
+    public void closeInventory(EntityPlayer player) {
+
+    }
+
+    @Override
+    public boolean isItemValidForSlot(int index, ItemStack stack) {
+        return index == INPUT_SLOT; // 只允许输入槽
     }
 
     @Override
@@ -186,47 +145,23 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
         return 0;
     }
 
-
     @Override
     public int[] getSlotsForFace(EnumFacing side) {
         if (side == EnumFacing.DOWN) {
-            return SLOTS_BOTTOM;
+            return new int[]{OUTPUT_SLOT};
         } else {
-            return SLOTS_TOP;
+            return new int[]{INPUT_SLOT};
         }
     }
 
-
-    /**
-     * Returns true if automation can insert the given item in the given slot from the given side.
-     */
-    public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction)
-    {
-        return index == 0;
+    @Override
+    public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction) {
+        return index == INPUT_SLOT;
     }
 
-    /**
-     * Returns true if automation can extract the given item in the given slot from the given side.
-     */
-    public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction)
-    {
-        return index == 1;
-    }
-
-    public String getGuiID()
-    {
-        return "dragonindustry:test_container";
-    }
-
-    public Container createContainer(InventoryPlayer playerInventory, EntityPlayer playerIn)
-    {
-        return new TestContainer(playerInventory, this);
-    }
-
-
-    public void clear()
-    {
-        this.testContainerItemStacks.clear();
+    @Override
+    public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
+        return index == OUTPUT_SLOT;
     }
 
     @Override
@@ -239,20 +174,38 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
         return false;
     }
 
-    net.minecraftforge.items.IItemHandler handlerTop = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, EnumFacing.UP);
-    net.minecraftforge.items.IItemHandler handlerBottom = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, EnumFacing.DOWN);
-    net.minecraftforge.items.IItemHandler handlerSide = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, EnumFacing.WEST);
+    net.minecraftforge.items.IItemHandler handlerTop = new SidedInvWrapper(this, EnumFacing.UP);
+    net.minecraftforge.items.IItemHandler handlerBottom = new SidedInvWrapper(this, EnumFacing.DOWN);
+    net.minecraftforge.items.IItemHandler handlerSide = new SidedInvWrapper(this, EnumFacing.WEST);
 
     @Nullable
     @Override
     public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing) {
-        if (facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-            if (facing == EnumFacing.DOWN)
+        if (facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+            if (facing == EnumFacing.DOWN) {
                 return (T) handlerBottom;
-            else if (facing == EnumFacing.UP)
+            } else if (facing == EnumFacing.UP) {
                 return (T) handlerTop;
-            else
+            } else {
                 return (T) handlerSide;
+            }
+        }
         return super.getCapability(capability, facing);
+    }
+
+    @Override
+    public void clear() {
+        itemStackHandler.setStackInSlot(INPUT_SLOT, ItemStack.EMPTY);
+        itemStackHandler.setStackInSlot(OUTPUT_SLOT, ItemStack.EMPTY);
+    }
+
+    @Override
+    public Container createContainer(InventoryPlayer playerInventory, EntityPlayer playerIn) {
+        return null;
+    }
+
+    @Override
+    public String getGuiID() {
+        return null;
     }
 }

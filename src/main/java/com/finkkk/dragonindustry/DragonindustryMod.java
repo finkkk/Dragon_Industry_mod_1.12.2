@@ -1,6 +1,8 @@
 package com.finkkk.dragonindustry;
 
 import com.finkkk.dragonindustry.block.ModBlocks;
+import com.finkkk.dragonindustry.block.testcontainer.TestItemHandler;
+import com.finkkk.dragonindustry.block.testcontainer.TestStorage;
 import com.finkkk.dragonindustry.tileentity.TileEntityTestContainer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -8,6 +10,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -23,7 +26,7 @@ public class DragonindustryMod
     public static final int GUI_TEST_CONTAINER = 2; // 为你的GUI分配一个ID
     public static final String MODID = "dragonindustry";
     public static final String NAME = "Dragon Industry Mod";
-    public static final String VERSION = "0.2";
+    public static final String VERSION = "0.2.1";
 
     private static Logger logger;
 
@@ -35,6 +38,8 @@ public class DragonindustryMod
     {
 
         logger = event.getModLog();
+        // 注册能力
+        CapabilityManager.INSTANCE.register(TestItemHandler.class, new TestStorage(), TestItemHandler::new);
         // 注册 GUI Handler
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
     }
@@ -52,3 +57,6 @@ public class DragonindustryMod
 
     }
 }
+
+
+
