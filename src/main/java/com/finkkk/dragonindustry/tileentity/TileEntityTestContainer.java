@@ -173,20 +173,16 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
 
 
     @Override
-    public int[] getSlotsForFace(EnumFacing side)
-    {
-        if (side == EnumFacing.DOWN)
-        {
+    public int[] getSlotsForFace(EnumFacing side) {
+        if (side == EnumFacing.DOWN) {
             return SLOTS_BOTTOM;
-        }
-        else if(side == EnumFacing.UP)
-        {
+        } else if (side == EnumFacing.UP) {
             return SLOTS_TOP;
-        }
-        else {
-            return null;
+        } else {
+            return new int[0]; // 返回空数组，而不是 null
         }
     }
+
 
     /**
      * Returns true if automation can insert the given item in the given slot from the given side.
