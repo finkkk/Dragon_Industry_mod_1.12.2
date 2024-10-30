@@ -1,6 +1,7 @@
 package com.finkkk.dragonindustry;
 
 import com.finkkk.dragonindustry.Item.ModItems;
+import com.finkkk.dragonindustry.block.ModBlocks;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -15,7 +16,7 @@ public class ModGroups {
     public static final CreativeTabs DRAGON_INDUSTRY = new CreativeTabs(CreativeTabs.getNextID(),"dragon_industry") {
         @SideOnly(Side.CLIENT)
         public ItemStack getTabIconItem() {
-            return new ItemStack(Items.APPLE);
+            return new ItemStack(ModBlocks.TEST_CONTAINER);
         }
     };
 }

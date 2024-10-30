@@ -1,5 +1,6 @@
 package com.finkkk.dragonindustry.tileentity;
 
+import akka.util.Index;
 import com.finkkk.dragonindustry.Item.ModItems;
 import com.finkkk.dragonindustry.block.ModBlocks;
 import com.finkkk.dragonindustry.container.TestContainer;
@@ -31,6 +32,9 @@ import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.datafix.FixTypes;
 import net.minecraft.util.datafix.walkers.ItemStackDataLists;
 import net.minecraft.util.math.MathHelper;
+import net.minecraftforge.common.capabilities.Capability;
+
+import javax.annotation.Nullable;
 
 public class TileEntityTestContainer extends TileEntityLockable implements ITickable, ISidedInventory
 {
@@ -112,15 +116,26 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
             ItemStack inputStack = this.testContainerItemStacks.get(0); // 输入物品
             ItemStack outputStack = this.testContainerItemStacks.get(1); // 输出物品
 
-            // 如果输入槽中有泥土，并且输出槽为空或已满石头
-            if (!inputStack.isEmpty() && inputStack.getItem() == ModItems.TEST3) {
-                if (outputStack.isEmpty()) {
-                    this.testContainerItemStacks.set(1, new ItemStack(Blocks.STONE)); // 输出石头
-                } else if (outputStack.getItem() == Item.getItemFromBlock(Blocks.STONE) && outputStack.getCount() < outputStack.getMaxStackSize()) {
-                    outputStack.grow(1); // 增加输出槽的石头数量
+            // 如果输入槽有物品
+            if (!inputStack.isEmpty())
+            {
+                // 如果输入槽为苹果
+                if (inputStack.getItem() == Items.APPLE)
+                {
+                    // 如果输出槽为空
+                    if (outputStack.isEmpty())
+                    {
+                        this.testContainerItemStacks.set(1, new ItemStack(Blocks.STONE)); // 输出石头
+                    }
+                    // 如果输入槽已有石头且未满64个
+                    else if (outputStack.getItem() == Item.getItemFromBlock(Blocks.STONE) && outputStack.getCount() < outputStack.getMaxStackSize())
+                    {
+                        outputStack.grow(1); // 增加输出槽的石头数量
+                    }
+                    inputStack.shrink(1); // 消耗泥土
+                    this.markDirty();     // 标记已修改，保存数据
                 }
-                inputStack.shrink(1); // 消耗泥土
-                this.markDirty();     // 标记已修改，保存数据
+
             }
 
         }
@@ -153,7 +168,7 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
      */
     public boolean isItemValidForSlot(int index, ItemStack stack)
     {
-        return index == 0 && stack.getItem() == ModItems.TEST3;
+        return index == 0;
     }
 
     @Override
@@ -176,10 +191,8 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
     public int[] getSlotsForFace(EnumFacing side) {
         if (side == EnumFacing.DOWN) {
             return SLOTS_BOTTOM;
-        } else if (side == EnumFacing.UP) {
-            return SLOTS_TOP;
         } else {
-            return new int[0]; // 返回空数组，而不是 null
+            return SLOTS_TOP;
         }
     }
 
@@ -189,7 +202,7 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
      */
     public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction)
     {
-        return this.isItemValidForSlot(index, itemStackIn);
+        return index == 0;
     }
 
     /**
@@ -226,14 +239,13 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
         return false;
     }
 
-    net.minecraftforge.items.IItemHandler handlerTop = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.UP);
-    net.minecraftforge.items.IItemHandler handlerBottom = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.DOWN);
-    net.minecraftforge.items.IItemHandler handlerSide = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.WEST);
+    net.minecraftforge.items.IItemHandler handlerTop = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, EnumFacing.UP);
+    net.minecraftforge.items.IItemHandler handlerBottom = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, EnumFacing.DOWN);
+    net.minecraftforge.items.IItemHandler handlerSide = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, EnumFacing.WEST);
 
+    @Nullable
     @Override
-    @javax.annotation.Nullable
-    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @javax.annotation.Nullable net.minecraft.util.EnumFacing facing)
-    {
+    public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing) {
         if (facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
             if (facing == EnumFacing.DOWN)
                 return (T) handlerBottom;
