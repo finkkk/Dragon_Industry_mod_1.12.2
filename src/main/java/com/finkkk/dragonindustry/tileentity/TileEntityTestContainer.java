@@ -1,6 +1,7 @@
 package com.finkkk.dragonindustry.tileentity;
 
 import com.finkkk.dragonindustry.Item.ModItems;
+import com.finkkk.dragonindustry.block.testcontainer.TestItemHandler;
 import com.finkkk.dragonindustry.container.TestContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -24,9 +25,9 @@ import javax.annotation.Nullable;
 public class TileEntityTestContainer extends TileEntityLockable implements ITickable, ISidedInventory
 {
 
-    private static final int INPUT_SLOT = 0;
-    private static final int OUTPUT_SLOT = 1;
-    private ItemStackHandler itemStackHandler = new ItemStackHandler(2) {
+    public static final int INPUT_SLOT = 0;
+    public static final int OUTPUT_SLOT = 1;
+    private TestItemHandler itemStackHandler = new TestItemHandler(2) {
         @Override
         protected void onContentsChanged(int slot) {
             TileEntityTestContainer.this.markDirty();
@@ -40,28 +41,10 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
     @Override
     public void update() {
         if (!this.world.isRemote) {
-            ItemStack inputStack = itemStackHandler.getStackInSlot(INPUT_SLOT); // 输入物品
-            ItemStack outputStack = itemStackHandler.getStackInSlot(OUTPUT_SLOT); // 输出物品
-
-            // 如果输入槽有物品
-            if (!inputStack.isEmpty()) {
-                // 如果输入槽为苹果
-                if (inputStack.getItem() == ModItems.TEST3) {
-                    // 如果输出槽为空
-                    if (outputStack.isEmpty()) {
-                        itemStackHandler.setStackInSlot(OUTPUT_SLOT, new ItemStack(Blocks.STONE)); // 输出石头
-                        inputStack.shrink(1); // 消耗苹果
-                    }
-                    // 如果输入槽已有石头且未满64个
-                    else if (outputStack.getItem() == Item.getItemFromBlock(Blocks.STONE) && outputStack.getCount() < outputStack.getMaxStackSize()) {
-                        outputStack.grow(1); // 增加输出槽的石头数量
-                        inputStack.shrink(1); // 消耗苹果
-                    }
-
-
-                }
-            }
+            itemStackHandler.processInputOutput();
+            this.markDirty();
         }
+
     }
     public ItemStackHandler getItemStackHandler() {
         return itemStackHandler;
@@ -147,16 +130,12 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
 
     @Override
     public int[] getSlotsForFace(EnumFacing side) {
-        if (side == EnumFacing.DOWN) {
-            return new int[]{OUTPUT_SLOT};
-        } else {
-            return new int[]{INPUT_SLOT};
-        }
+        return new int[]{INPUT_SLOT, OUTPUT_SLOT}; // 让所有面都可以访问输入和输出槽
     }
 
     @Override
     public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction) {
-        return index == INPUT_SLOT;
+        return index == INPUT_SLOT; // 允许所有面插入输入槽
     }
 
     @Override
@@ -174,21 +153,14 @@ public class TileEntityTestContainer extends TileEntityLockable implements ITick
         return false;
     }
 
-    net.minecraftforge.items.IItemHandler handlerTop = new SidedInvWrapper(this, EnumFacing.UP);
-    net.minecraftforge.items.IItemHandler handlerBottom = new SidedInvWrapper(this, EnumFacing.DOWN);
-    net.minecraftforge.items.IItemHandler handlerSide = new SidedInvWrapper(this, EnumFacing.WEST);
+    // 统一的 SidedInvWrapper 实例
+    net.minecraftforge.items.IItemHandler handler = new SidedInvWrapper(this, null);
 
     @Nullable
     @Override
     public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing) {
-        if (facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-            if (facing == EnumFacing.DOWN) {
-                return (T) handlerBottom;
-            } else if (facing == EnumFacing.UP) {
-                return (T) handlerTop;
-            } else {
-                return (T) handlerSide;
-            }
+        if (capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+            return (T) handler; // 所有面使用同一个 handler
         }
         return super.getCapability(capability, facing);
     }
